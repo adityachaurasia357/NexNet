@@ -5,18 +5,41 @@
 
 import Foundation
 
+/// Converts a `NetworkRequest` model into a concrete `URLRequest`.
+///
+/// Implement this protocol to substitute the default `RequestBuilder` with a custom
+/// implementation (e.g. for testing or non-standard header injection).
 public protocol RequestBuilderProtocol: Sendable {
+    /// Builds a `URLRequest` from the given `NetworkRequest`.
+    ///
+    /// - Parameter request: The model describing the desired HTTP request.
+    /// - Returns: A fully configured `URLRequest` ready for `URLSession`.
+    /// - Throws: `NexNetError.invalidURL` if the URL cannot be resolved.
     func build(from request: NetworkRequest) throws -> URLRequest
 }
 
-/// Converts a `NetworkRequest` model into a concrete `URLRequest`.
+/// Default implementation of `RequestBuilderProtocol`.
+///
+/// Applied automatically by `NetworkManager`; you rarely need to interact with this type directly.
+/// Default headers are merged first; per-request headers override them on collision.
 public struct RequestBuilder: RequestBuilderProtocol {
+    /// Headers applied to every request built by this instance.
+    ///
+    /// Per-request headers passed to `build(from:)` override these on key collision.
     public let defaultHeaders: [String: String]
 
+    /// Creates a `RequestBuilder` with the given default headers.
+    ///
+    /// - Parameter defaultHeaders: Headers included in every built request. Defaults to empty.
     public init(defaultHeaders: [String: String] = [:]) {
         self.defaultHeaders = defaultHeaders
     }
 
+    /// Assembles a `URLRequest` from `request`, merging default headers and encoding the body.
+    ///
+    /// - Parameter request: The `NetworkRequest` model to convert.
+    /// - Returns: A `URLRequest` ready for `URLSession`.
+    /// - Throws: `NexNetError.invalidURL` if query parameters cannot be appended to the URL.
     public func build(from request: NetworkRequest) throws -> URLRequest {
         let url = try resolvedURL(for: request)
         var urlRequest = URLRequest(

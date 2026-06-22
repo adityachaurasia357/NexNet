@@ -14,7 +14,9 @@ import Foundation
 
 // MARK: - Framework Version
 
+/// Namespace for NexNet version constants.
 public enum NexNetVersion {
+    /// The current semantic version string of the NexNet framework (e.g. `"1.0.0"`).
     public static let current = "1.0.0"
 }
 

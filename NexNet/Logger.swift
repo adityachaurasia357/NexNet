@@ -8,12 +8,22 @@ import os.log
 
 // MARK: - LogLevel
 
+/// Severity levels for the NexNet logger, ordered from least to most severe.
+///
+/// Set `NexNetLogger.shared.minimumLevel` to filter out levels below a threshold.
+/// Use `.none` to suppress all output.
 public enum LogLevel: Int, Comparable, Sendable {
+    /// Fine-grained diagnostic information; highest verbosity.
     case verbose = 0
+    /// Standard developer diagnostics; the default minimum level.
     case debug   = 1
+    /// Notable operational events that are not errors.
     case info    = 2
+    /// Unexpected situations that did not prevent the operation from completing.
     case warning = 3
+    /// Failures that require attention.
     case error   = 4
+    /// Disables all log output.
     case none    = 5
 
     public static func < (lhs: LogLevel, rhs: LogLevel) -> Bool {
@@ -44,7 +54,19 @@ public enum LogLevel: Int, Comparable, Sendable {
 
 // MARK: - Protocol
 
+/// Interface for a NexNet-compatible logger.
+///
+/// Conform to this protocol to supply a custom logging back-end (e.g. a remote
+/// analytics service) in place of the default `NexNetLogger`.
 public protocol NexNetLoggerProtocol: Sendable {
+    /// Logs a message at the specified severity level.
+    ///
+    /// - Parameters:
+    ///   - message: The log message string.
+    ///   - level: Severity of the event.
+    ///   - file: Source file name (populated automatically via `#file`).
+    ///   - function: Enclosing function name (populated automatically via `#function`).
+    ///   - line: Source line number (populated automatically via `#line`).
     func log(_ message: String, level: LogLevel, file: String, function: String, line: Int)
 }
 
@@ -91,6 +113,16 @@ public final class NexNetLogger: NexNetLoggerProtocol, @unchecked Sendable {
 
     // MARK: General logging
 
+    /// Logs a message at the specified level if logging is enabled and the level meets the minimum threshold.
+    ///
+    /// In release builds, output goes to `os_log` only. In debug builds it also prints to the console.
+    ///
+    /// - Parameters:
+    ///   - message: The message to log.
+    ///   - level: Severity level; filtered against `minimumLevel`.
+    ///   - file: Auto-filled by the compiler.
+    ///   - function: Auto-filled by the compiler.
+    ///   - line: Auto-filled by the compiler.
     public func log(
         _ message: String,
         level: LogLevel,

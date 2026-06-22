@@ -118,6 +118,10 @@ public final class NetworkManager: @unchecked Sendable {
 
     // MARK: - Init
 
+    /// Creates a `NetworkManager` with the supplied immutable configuration.
+    ///
+    /// - Parameter configuration: URLSession config, default headers, JSON decoder, and log level.
+    ///   Defaults to `NetworkManagerConfiguration.default`, which is suitable for most apps.
     public init(configuration: NetworkManagerConfiguration = .default) {
         self.session = URLSession(configuration: configuration.urlSessionConfiguration)
         self.baseHeaders = configuration.defaultHeaders
@@ -331,6 +335,24 @@ public final class NetworkManager: @unchecked Sendable {
         )
     }
 
+    // Used by NetworkManager+Completion and NexNetObjC — resolves a URL string then delegates
+    // to requestRaw, so both completion-handler and @objc callers share the same pipeline.
+    func rawRequest(
+        urlString: String,
+        method: HTTPMethod,
+        headers: [String: String]?,
+        body: RequestBody
+    ) async throws -> RawNetworkResponse {
+        let config = currentConfig
+        let url    = try resolveURL(urlString, config: config)
+        return try await requestRaw(NetworkRequest(
+            url: url,
+            method: method,
+            headers: headers ?? [:],
+            body: body
+        ))
+    }
+
     private func withRetry<T>(
         policy: RetryPolicy,
         operation: () async throws -> T
@@ -346,7 +368,7 @@ public final class NetworkManager: @unchecked Sendable {
                     throw nexError
                 }
                 let delay = policy.delay(for: attempt)
-                logger.warning("Retrying (\(attempt)/\(policy.maxAttempts)) after \(String(format: "%.1f", delay))s — \(nexError.localizedDescription ?? "")")
+                logger.warning("Retrying (\(attempt)/\(policy.maxAttempts)) after \(String(format: "%.1f", delay))s — \(nexError.localizedDescription)")
                 try await Task.sleep(nanoseconds: UInt64(delay * 1_000_000_000))
             }
         }

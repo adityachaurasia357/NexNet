@@ -6,8 +6,37 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		11DA74976726CE92B3FE5BBA /* NexNet.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = C8FB1BC32FE9142D000C7DD7 /* NexNet.framework */; };
+		861A403818EF39F730ED295C /* RequestBuilderTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C8FB1C162FE926ED000C7DD7 /* RequestBuilderTests.swift */; };
+		8D6019F13BDBD6945EE780E6 /* MockURLProtocol.swift in Sources */ = {isa = PBXBuildFile; fileRef = C8FB1C142FE926A5000C7DD7 /* MockURLProtocol.swift */; };
+		915A70F2B178C15B76D0B919 /* ResponseHandlerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C8FB1C172FE92716000C7DD7 /* ResponseHandlerTests.swift */; };
+		AB0A1E4278CF081C15D2FEB2 /* NexNetErrorTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C8FB1C152FE926C9000C7DD7 /* NexNetErrorTests.swift */; };
+		ADDB040F84B92084C8DCDCE1 /* NetworkManagerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C8FB1C182FE92754000C7DD7 /* NetworkManagerTests.swift */; };
+		B39901B57A10E0ED2D6A6D0E /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 4F3E6B219B0DF234A764194B /* Foundation.framework */; };
+		E657280A74D90C5C7CCF5795 /* RetryPolicyTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C8FB1C192FE92770000C7DD7 /* RetryPolicyTests.swift */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		EEF67D5D19FB58315AE89CAA /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = C8FB1BBA2FE9142C000C7DD7 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = C8FB1BC22FE9142D000C7DD7;
+			remoteInfo = NexNet;
+		};
+/* End PBXContainerItemProxy section */
+
 /* Begin PBXFileReference section */
+		4F3E6B219B0DF234A764194B /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS18.0.sdk/System/Library/Frameworks/Foundation.framework; sourceTree = DEVELOPER_DIR; };
+		86ECE096531BE208B9A7021D /* NexNetTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = NexNetTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		C8FB1BC32FE9142D000C7DD7 /* NexNet.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = NexNet.framework; sourceTree = BUILT_PRODUCTS_DIR; };
+		C8FB1C142FE926A5000C7DD7 /* MockURLProtocol.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MockURLProtocol.swift; sourceTree = "<group>"; };
+		C8FB1C152FE926C9000C7DD7 /* NexNetErrorTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NexNetErrorTests.swift; sourceTree = "<group>"; };
+		C8FB1C162FE926ED000C7DD7 /* RequestBuilderTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RequestBuilderTests.swift; sourceTree = "<group>"; };
+		C8FB1C172FE92716000C7DD7 /* ResponseHandlerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ResponseHandlerTests.swift; sourceTree = "<group>"; };
+		C8FB1C182FE92754000C7DD7 /* NetworkManagerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NetworkManagerTests.swift; sourceTree = "<group>"; };
+		C8FB1C192FE92770000C7DD7 /* RetryPolicyTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RetryPolicyTests.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
@@ -19,6 +48,15 @@
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
+		BECED4D8C4B5A6B2E8E782E3 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				B39901B57A10E0ED2D6A6D0E /* Foundation.framework in Frameworks */,
+				11DA74976726CE92B3FE5BBA /* NexNet.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		C8FB1BC02FE9142D000C7DD7 /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
@@ -29,11 +67,29 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		478C062EC47C01832F8BAEC8 /* iOS */ = {
+			isa = PBXGroup;
+			children = (
+				4F3E6B219B0DF234A764194B /* Foundation.framework */,
+			);
+			name = iOS;
+			sourceTree = "<group>";
+		};
+		6CFC8367E5C660857EB1655E /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				478C062EC47C01832F8BAEC8 /* iOS */,
+			);
+			name = Frameworks;
+			sourceTree = "<group>";
+		};
 		C8FB1BB92FE9142C000C7DD7 = {
 			isa = PBXGroup;
 			children = (
 				C8FB1BC52FE9142D000C7DD7 /* NexNet */,
 				C8FB1BC42FE9142D000C7DD7 /* Products */,
+				C8FB1C132FE92696000C7DD7 /* NexNetTests */,
+				6CFC8367E5C660857EB1655E /* Frameworks */,
 			);
 			sourceTree = "<group>";
 		};
@@ -41,8 +97,22 @@
 			isa = PBXGroup;
 			children = (
 				C8FB1BC32FE9142D000C7DD7 /* NexNet.framework */,
+				86ECE096531BE208B9A7021D /* NexNetTests.xctest */,
 			);
 			name = Products;
+			sourceTree = "<group>";
+		};
+		C8FB1C132FE92696000C7DD7 /* NexNetTests */ = {
+			isa = PBXGroup;
+			children = (
+				C8FB1C142FE926A5000C7DD7 /* MockURLProtocol.swift */,
+				C8FB1C152FE926C9000C7DD7 /* NexNetErrorTests.swift */,
+				C8FB1C162FE926ED000C7DD7 /* RequestBuilderTests.swift */,
+				C8FB1C172FE92716000C7DD7 /* ResponseHandlerTests.swift */,
+				C8FB1C182FE92754000C7DD7 /* NetworkManagerTests.swift */,
+				C8FB1C192FE92770000C7DD7 /* RetryPolicyTests.swift */,
+			);
+			path = NexNetTests;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -58,6 +128,24 @@
 /* End PBXHeadersBuildPhase section */
 
 /* Begin PBXNativeTarget section */
+		5A07DEAE80807553D29AE58C /* NexNetTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = A41A8BF74F65637874263765 /* Build configuration list for PBXNativeTarget "NexNetTests" */;
+			buildPhases = (
+				3F5C9769D05A2C1144CF27DB /* Sources */,
+				BECED4D8C4B5A6B2E8E782E3 /* Frameworks */,
+				2F9FF63323A292B9C991BFD9 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				0DAE7EA20CBA6055F9B13150 /* PBXTargetDependency */,
+			);
+			name = NexNetTests;
+			productName = NexNetTests;
+			productReference = 86ECE096531BE208B9A7021D /* NexNetTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
 		C8FB1BC22FE9142D000C7DD7 /* NexNet */ = {
 			isa = PBXNativeTarget;
 			buildConfigurationList = C8FB1BCC2FE9142D000C7DD7 /* Build configuration list for PBXNativeTarget "NexNet" */;
@@ -75,8 +163,6 @@
 				C8FB1BC52FE9142D000C7DD7 /* NexNet */,
 			);
 			name = NexNet;
-			packageProductDependencies = (
-			);
 			productName = NexNet;
 			productReference = C8FB1BC32FE9142D000C7DD7 /* NexNet.framework */;
 			productType = "com.apple.product-type.framework";
@@ -111,11 +197,19 @@
 			projectRoot = "";
 			targets = (
 				C8FB1BC22FE9142D000C7DD7 /* NexNet */,
+				5A07DEAE80807553D29AE58C /* NexNetTests */,
 			);
 		};
 /* End PBXProject section */
 
 /* Begin PBXResourcesBuildPhase section */
+		2F9FF63323A292B9C991BFD9 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		C8FB1BC12FE9142D000C7DD7 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -126,6 +220,19 @@
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
+		3F5C9769D05A2C1144CF27DB /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				8D6019F13BDBD6945EE780E6 /* MockURLProtocol.swift in Sources */,
+				AB0A1E4278CF081C15D2FEB2 /* NexNetErrorTests.swift in Sources */,
+				861A403818EF39F730ED295C /* RequestBuilderTests.swift in Sources */,
+				915A70F2B178C15B76D0B919 /* ResponseHandlerTests.swift in Sources */,
+				ADDB040F84B92084C8DCDCE1 /* NetworkManagerTests.swift in Sources */,
+				E657280A74D90C5C7CCF5795 /* RetryPolicyTests.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		C8FB1BBF2FE9142D000C7DD7 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -135,7 +242,47 @@
 		};
 /* End PBXSourcesBuildPhase section */
 
+/* Begin PBXTargetDependency section */
+		0DAE7EA20CBA6055F9B13150 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			name = NexNet;
+			target = C8FB1BC22FE9142D000C7DD7 /* NexNet */;
+			targetProxy = EEF67D5D19FB58315AE89CAA /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
 /* Begin XCBuildConfiguration section */
+		0CB938C1969DB2BDFDBE09D6 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = NO;
+				CLANG_ENABLE_OBJC_WEAK = NO;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 26.5;
+				PRODUCT_BUNDLE_IDENTIFIER = com.nexnet.NexNetTests;
+				PRODUCT_NAME = NexNetTests;
+				SDKROOT = iphoneos;
+				SWIFT_VERSION = 5.0;
+				TEST_TARGET_NAME = NexNet;
+			};
+			name = Debug;
+		};
+		9DF6DD8D15E87D351C77D742 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = NO;
+				CLANG_ENABLE_OBJC_WEAK = NO;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 26.5;
+				PRODUCT_BUNDLE_IDENTIFIER = com.nexnet.NexNetTests;
+				PRODUCT_NAME = NexNetTests;
+				SDKROOT = iphoneos;
+				SWIFT_VERSION = 5.0;
+				TEST_TARGET_NAME = NexNet;
+				VALIDATE_PRODUCT = YES;
+			};
+			name = Release;
+		};
 		C8FB1BCA2FE9142D000C7DD7 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
@@ -338,6 +485,15 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
+		A41A8BF74F65637874263765 /* Build configuration list for PBXNativeTarget "NexNetTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				9DF6DD8D15E87D351C77D742 /* Release */,
+				0CB938C1969DB2BDFDBE09D6 /* Debug */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
 		C8FB1BBD2FE9142D000C7DD7 /* Build configuration list for PBXProject "NexNet" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (

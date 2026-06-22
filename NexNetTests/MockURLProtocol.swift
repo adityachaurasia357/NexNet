@@ -29,8 +29,22 @@ final class MockURLProtocol: URLProtocol, @unchecked Sendable {
             client?.urlProtocol(self, didFailWithError: URLError(.unknown))
             return
         }
+        // URLSession delivers POST/PUT/PATCH bodies as httpBodyStream inside URLProtocol,
+        // not httpBody. Materialize the stream so handlers can read request.httpBody directly.
+        var normalizedRequest = request
+        if normalizedRequest.httpBody == nil, let stream = normalizedRequest.httpBodyStream {
+            var data = Data()
+            stream.open()
+            var buffer = [UInt8](repeating: 0, count: 4096)
+            while stream.hasBytesAvailable {
+                let n = stream.read(&buffer, maxLength: buffer.count)
+                if n > 0 { data.append(&buffer, count: n) }
+            }
+            stream.close()
+            normalizedRequest.httpBody = data
+        }
         do {
-            let (response, data) = try handler(request)
+            let (response, data) = try handler(normalizedRequest)
             client?.urlProtocol(self, didReceive: response, cacheStoragePolicy: .notAllowed)
             client?.urlProtocol(self, didLoad: data)
             client?.urlProtocolDidFinishLoading(self)

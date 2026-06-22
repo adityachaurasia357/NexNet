@@ -5,8 +5,28 @@
 
 import Foundation
 
+/// Validates raw HTTP responses and decodes their bodies.
+///
+/// Implement this protocol to substitute the default `ResponseHandler` with a custom
+/// implementation (e.g. for testing or non-standard error mapping).
 public protocol ResponseHandlerProtocol: Sendable {
+    /// Validates that `response` is a successful HTTP response.
+    ///
+    /// - Parameters:
+    ///   - response: The `URLResponse` returned by `URLSession`.
+    ///   - data: The raw response bytes (used to populate error payloads).
+    /// - Returns: The cast `HTTPURLResponse` when the status code is 2xx.
+    /// - Throws: A `NexNetError` case that matches the HTTP status code.
     func validate(_ response: URLResponse, data: Data) throws -> HTTPURLResponse
+
+    /// Decodes `data` into the requested `Decodable` type.
+    ///
+    /// - Parameters:
+    ///   - type: The target `Decodable` type.
+    ///   - data: Raw response bytes.
+    ///   - decoder: The `JSONDecoder` to use.
+    /// - Returns: An instance of `T`.
+    /// - Throws: `NexNetError.emptyResponse` or `NexNetError.decodingFailed` on failure.
     func decode<T: Decodable>(_ type: T.Type, from data: Data, decoder: JSONDecoder) throws -> T
 }
 

@@ -54,7 +54,7 @@ extension NexNetError: CustomNSError {
     /// Always includes `NSLocalizedDescriptionKey`.
     /// Includes `NSLocalizedRecoverySuggestionErrorKey` where a recovery suggestion is available.
     public var errorUserInfo: [String: Any] {
-        var info: [String: Any] = [NSLocalizedDescriptionKey: localizedDescription]
+        var info: [String: Any] = [NSLocalizedDescriptionKey: errorDescription ?? ""]
         if let suggestion = recoverySuggestion {
             info[NSLocalizedRecoverySuggestionErrorKey] = suggestion
         }

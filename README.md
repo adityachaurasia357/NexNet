@@ -7,6 +7,8 @@ A production-grade Swift networking framework built on async/await — type-safe
 ## Features
 
 - **Single method API** — one `fetch` call handles GET, POST, PUT, PATCH, and DELETE
+- **Dual concurrency model** — async/await and completion-handler APIs are identical in capability; use whichever fits your codebase
+- **Objective-C support** — `NexNetClient` is a full `@objc NSObject` wrapper; `NexNetError` bridges to `NSError` automatically
 - **Auto JSON encoding/decoding** — request bodies encoded automatically; responses decoded into any `Decodable` type
 - **Snake_case → camelCase** — built-in key strategy; no custom `CodingKeys` needed
 - **ISO 8601 dates** — handles both `2024-01-15T10:30:00Z` and `2024-01-15T10:30:00.123Z` out of the box
@@ -15,6 +17,7 @@ A production-grade Swift networking framework built on async/await — type-safe
 - **cURL export** — every request produces a fully copy-pasteable terminal command
 - **Runtime configuration** — swap `baseURL`, headers, and timeout at any time via `configure(with:)`
 - **Automatic retry** — configurable exponential back-off with per-request `RetryPolicy`
+- **Cancellation** — every completion-handler call returns a `NexNetCancellable` token; call `.cancel()` to abort
 - **Thread-safe** — all mutable state guarded by `NSLock`; safe to call from any `Task`
 - **Zero dependencies** — built entirely on `Foundation` and `os.log`
 
@@ -158,6 +161,75 @@ let raw: RawNetworkResponse = try await NetworkManager.shared.requestRaw(
 )
 // raw.data, raw.statusCode, raw.allHeaderFields, raw.duration
 ```
+
+### Completion Handlers
+
+Every `async throws` method has a direct completion-handler mirror. All three variants return a `NexNetCancellable` token.
+
+**`fetch` with completion** — typed decode, Result callback:
+
+```swift
+NetworkManager.shared.fetch(
+    responseType: Post.self,
+    url: "/posts/1"
+) { result in
+    // called on DispatchQueue.main by default
+    switch result {
+    case .success(let post): print(post.title)
+    case .failure(let error): print(error.localizedDescription)
+    }
+}
+```
+
+**`request` with completion** — full HTTP metadata:
+
+```swift
+NetworkManager.shared.request(
+    NetworkRequest(url: url, method: .get),
+    as: Post.self
+) { result in
+    if case .success(let response) = result {
+        print(response.statusCode)   // Int
+        print(response.duration)     // TimeInterval
+        print(response.value.title)  // decoded Post
+    }
+}
+```
+
+**`requestRaw` with completion** — raw bytes, no decoding:
+
+```swift
+NetworkManager.shared.requestRaw(
+    NetworkRequest(url: url, method: .get)
+) { result in
+    if case .success(let response) = result {
+        print("\(response.data.count) bytes — HTTP \(response.statusCode)")
+    }
+}
+```
+
+**Custom callback queue** — default is `.main`; pass any queue:
+
+```swift
+NetworkManager.shared.fetch(
+    responseType: Post.self,
+    url: "/posts/1",
+    callbackQueue: DispatchQueue(label: "com.app.processing", qos: .utility)
+) { result in
+    // running on the processing queue — safe for heavy work
+    // dispatch to .main before touching UI
+}
+```
+
+**Cancellation:**
+
+```swift
+let token = NetworkManager.shared.fetch(responseType: Post.self, url: "/posts/1") { _ in }
+// Later (e.g. viewDidDisappear):
+token.cancel()   // delivers NexNetError.cancelled to the completion handler
+```
+
+---
 
 ### Retry Policy
 
@@ -318,6 +390,123 @@ This is useful for:
 - **Reproducing bugs** — paste the command into a terminal to confirm whether the issue is in the app or the API
 - **Sharing with backend teams** — hand over the exact request that failed without any setup
 - **Quick iteration** — tweak headers or bodies in the terminal before updating Swift code
+
+---
+
+## Objective-C
+
+NexNet ships a first-class Objective-C API via `NexNetClient` — a plain `NSObject` subclass that wraps `NetworkManager`. No bridging headers or special setup required beyond importing the module.
+
+```objc
+@import NexNet;
+// or
+#import <NexNet/NexNet-Swift.h>
+```
+
+### Configuration
+
+```objc
+[[NexNetClient shared] configureWithBaseURL:@"https://api.example.com"
+                            defaultHeaders:@{@"Authorization": @"Bearer token",
+                                            @"X-App-Version": @"1.0.0"}
+                                   timeout:30
+                            loggingEnabled:YES];
+```
+
+### GET
+
+```objc
+[[NexNetClient shared] getFromURL:@"/users/1"
+                          headers:nil
+                       completion:^(NSData *data, NSInteger statusCode, NSError *error) {
+    if (error) {
+        NSLog(@"Error %ld: %@", (long)error.code, error.localizedDescription);
+        return;
+    }
+    NSDictionary *json = [NSJSONSerialization JSONObjectWithData:data
+                                                        options:0 error:nil];
+    NSLog(@"User: %@", json[@"name"]);
+}];
+```
+
+### POST
+
+```objc
+NSError *serializeError;
+NSData *body = [NSJSONSerialization dataWithJSONObject:@{@"title": @"Hello",
+                                                         @"body":  @"World",
+                                                         @"userId": @1}
+                                               options:0
+                                                 error:&serializeError];
+
+[[NexNetClient shared] postToURL:@"/posts"
+                         headers:@{@"X-Request-ID": [[NSUUID UUID] UUIDString]}
+                            body:body
+                      completion:^(NSData *data, NSInteger statusCode, NSError *error) {
+    NSLog(@"Created — HTTP %ld", (long)statusCode);
+}];
+```
+
+### PUT / PATCH / DELETE
+
+```objc
+// PUT
+[[NexNetClient shared] putToURL:@"/posts/1" headers:nil body:updatedBody completion:^(...) { }];
+
+// PATCH
+[[NexNetClient shared] patchURL:@"/posts/1" headers:nil body:patchBody completion:^(...) { }];
+
+// DELETE
+[[NexNetClient shared] deleteFromURL:@"/posts/1" headers:nil
+    completion:^(NSData *data, NSInteger statusCode, NSError *error) {
+        NSLog(@"Deleted — HTTP %ld", (long)statusCode);
+    }];
+```
+
+### Cancellation
+
+```objc
+NexNetCancellable *token = [[NexNetClient shared] getFromURL:@"/feed"
+                                                     headers:nil
+                                                  completion:^(...) { }];
+// Cancel (e.g. viewDidDisappear):
+[token cancel];
+```
+
+### NSError Bridging
+
+`NexNetError` bridges to `NSError` automatically. Every error your completion handler receives has:
+
+| Property | Value |
+|----------|-------|
+| `domain` | `com.nexnet.error` |
+| `code` | HTTP status code for 4xx/5xx errors; negative code for non-HTTP errors |
+| `localizedDescription` | Human-readable failure message |
+| `localizedRecoverySuggestion` | Actionable hint where available |
+
+Non-HTTP error codes:
+
+| Error | Code |
+|-------|------|
+| Invalid URL | -2001 |
+| No internet connection | -2002 |
+| Timeout | -2003 |
+| Cancelled | -2004 |
+| SSL error | -2005 |
+| Empty response | -2006 |
+| Decoding failed | -2007 |
+| Encoding failed | -2008 |
+
+```objc
+if ([error.domain isEqualToString:@"com.nexnet.error"]) {
+    switch (error.code) {
+        case 401:   /* refresh token */ break;
+        case 404:   /* show not found UI */ break;
+        case -2002: /* show offline banner */ break;
+        case -2003: /* show timeout UI */ break;
+    }
+}
+```
 
 ---
 

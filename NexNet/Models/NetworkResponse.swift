@@ -5,14 +5,23 @@
 
 import Foundation
 
-/// A decoded response paired with HTTP metadata.
+/// A decoded response paired with full HTTP metadata.
+///
+/// Returned by `NetworkManager.request(_:as:decoder:)`. Use `value` for the decoded
+/// payload; `statusCode`, `headers`, `rawData`, and `duration` for diagnostics.
 public struct NetworkResponse<T: Decodable & Sendable>: Sendable {
+    /// The decoded response body.
     public let value: T
+    /// The HTTP status code (e.g. `200`, `201`).
     public let statusCode: Int
+    /// Response headers keyed by lowercase field name.
     public let headers: [String: String]
+    /// The raw response bytes before decoding.
     public let rawData: Data
+    /// Total elapsed time from request dispatch to response receipt, including all retry attempts.
     public let duration: TimeInterval
 
+    /// `true` when `statusCode` is in the 2xx range.
     public var isSuccess: Bool { (200..<300).contains(statusCode) }
 
     init(
@@ -33,12 +42,20 @@ public struct NetworkResponse<T: Decodable & Sendable>: Sendable {
 }
 
 /// An undecoded response carrying raw `Data` and HTTP metadata.
+///
+/// Returned by `NetworkManager.requestRaw(_:)`. Use this when you need the raw bytes
+/// (e.g. image downloads, streaming, or custom decoding pipelines).
 public struct RawNetworkResponse: Sendable {
+    /// The HTTP status code.
     public let statusCode: Int
+    /// Response headers keyed by lowercase field name.
     public let headers: [String: String]
+    /// Raw response bytes.
     public let data: Data
+    /// Total elapsed time from request dispatch to response receipt, including all retry attempts.
     public let duration: TimeInterval
 
+    /// `true` when `statusCode` is in the 2xx range.
     public var isSuccess: Bool { (200..<300).contains(statusCode) }
 
     init(

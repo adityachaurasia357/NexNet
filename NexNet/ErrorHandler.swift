@@ -5,6 +5,12 @@
 
 import Foundation
 
+/// A typed error thrown by every NexNet operation.
+///
+/// Every case maps to a distinct failure mode — a specific HTTP status code, a network
+/// condition, or a local encode/decode failure. Use `switch` to handle each case with
+/// precision, or check `isRetryable`, `statusCode`, and `localizedDescription` for
+/// generic handling.
 public enum NexNetError: Error, LocalizedError, @unchecked Sendable {
 
     // MARK: URL
@@ -74,7 +80,7 @@ public enum NexNetError: Error, LocalizedError, @unchecked Sendable {
         switch self {
 
         case .invalidURL(let url):
-            return ""\(url)" is not a valid URL. Check for typos or missing percent-encoding."
+            return "'\(url)' is not a valid URL. Check for typos or missing percent-encoding."
 
         case .noInternetConnection:
             return "You appear to be offline. Check your network connection and try again."
@@ -98,7 +104,7 @@ public enum NexNetError: Error, LocalizedError, @unchecked Sendable {
             return "Access to this resource is denied (403 Forbidden). You lack the necessary permissions."
 
         case .notFound(let url):
-            return "No resource was found at "\(url)" (404 Not Found)."
+            return "No resource was found at '\(url)' (404 Not Found)."
 
         case .unprocessableEntity:
             return "The request body failed server-side validation (422 Unprocessable Entity)."
@@ -134,7 +140,7 @@ public enum NexNetError: Error, LocalizedError, @unchecked Sendable {
             if path.isEmpty {
                 return "Failed to decode the response: \(error.localizedDescription)"
             }
-            return "Failed to decode the response at path "\(path)": \(error.localizedDescription)"
+            return "Failed to decode the response at path '\(path)': \(error.localizedDescription)"
 
         case .encodingFailed(let error):
             return "Failed to encode the request body: \(error.localizedDescription)"

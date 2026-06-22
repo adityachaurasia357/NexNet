@@ -226,11 +226,203 @@ private func loadPost(id: Int) async {
 
         @unknown default:
             // Guards against future NexNetError cases added in later versions.
-            print("[NexNet] Unrecognised error — \(error.localizedDescription ?? "no description")")
+            print("[NexNet] Unrecognised error — \(error.localizedDescription)")
         }
 
     } catch {
         // Non-NexNetError: shouldn't occur under normal operation.
         print("Unexpected non-NexNet error: \(error)")
     }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// MARK: 7 — Completion Handler API (Swift)
+//
+// Every async/await method has a direct completion-handler mirror.
+// All callbacks fire on DispatchQueue.main by default; pass callbackQueue:
+// to route to a background queue instead.
+//
+// The returned NexNetCancellable token lets you abort the request at any time
+// (e.g. when a view disappears). Discard the return value if you don't need
+// cancellation.
+// ─────────────────────────────────────────────────────────────────────────────
+
+// 7a — GET with Result<T, NexNetError> callback
+private func fetchPostCallback(id: Int) {
+    NetworkManager.shared.fetch(
+        responseType: Post.self,
+        url: "/posts/\(id)"
+    ) { result in
+        // Called on DispatchQueue.main
+        switch result {
+        case .success(let post):
+            print("Loaded via callback: \(post.title)")
+        case .failure(let error):
+            print("Error: \(error.localizedDescription)")
+        }
+    }
+}
+
+// 7b — POST with callback, capturing the cancellation token
+private var pendingRequest: NexNetCancellable?
+
+private func createPostCallback(title: String, body: String) {
+    let payload = CreatePostRequest(title: title, body: body, userId: 1)
+
+    pendingRequest = NetworkManager.shared.fetch(
+        responseType: Post.self,
+        url: "/posts",
+        headers: ["X-Request-ID": UUID().uuidString],
+        body: payload,
+        method: .post
+    ) { result in
+        switch result {
+        case .success(let post): print("Created: \(post.id)")
+        case .failure(let error): print("Create failed: \(error.localizedDescription)")
+        }
+    }
+}
+
+// 7c — Cancel an in-flight request (e.g. view disappeared)
+private func cancelPendingRequest() {
+    pendingRequest?.cancel()
+    pendingRequest = nil
+}
+
+// 7d — Full HTTP metadata via callback (status code, headers, duration)
+private func fetchPostWithMetadata(id: Int) {
+    guard let url = URL(string: "https://jsonplaceholder.typicode.com/posts/\(id)") else { return }
+
+    NetworkManager.shared.request(
+        NetworkRequest(url: url, method: .get),
+        as: Post.self
+    ) { result in
+        switch result {
+        case .success(let response):
+            print("Status: \(response.statusCode)")
+            print("Duration: \(String(format: "%.1fms", response.duration * 1000))")
+            print("Title: \(response.value.title)")
+        case .failure(let error):
+            print("Request failed: \(error.localizedDescription)")
+        }
+    }
+}
+
+// 7e — Raw bytes callback (useful for image downloads, binary data, custom decoding)
+private func downloadRawData(from urlString: String) {
+    guard let url = URL(string: urlString) else { return }
+
+    NetworkManager.shared.requestRaw(
+        NetworkRequest(url: url, method: .get)
+    ) { result in
+        switch result {
+        case .success(let response):
+            print("Received \(response.data.count) bytes — HTTP \(response.statusCode)")
+        case .failure(let error):
+            print("Download failed: \(error.localizedDescription)")
+        }
+    }
+}
+
+// 7f — Custom callback queue (useful for background processing)
+private func fetchPostOnBackground(id: Int) {
+    let processingQueue = DispatchQueue(label: "com.example.processing", qos: .utility)
+
+    NetworkManager.shared.fetch(
+        responseType: Post.self,
+        url: "/posts/\(id)",
+        callbackQueue: processingQueue   // callback fires on background queue
+    ) { result in
+        // Running on processingQueue — safe to do heavy work here.
+        // Dispatch to main manually before touching UI.
+        if case .success(let post) = result {
+            DispatchQueue.main.async { print("UI update: \(post.title)") }
+        }
+    }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// MARK: 8 — NexNetClient (Objective-C Bridge)
+//
+// NexNetClient is a plain NSObject subclass exposing every HTTP verb as an
+// @objc method. It is callable from both Swift and Objective-C.
+//
+// In an Objective-C file:
+//   @import NexNet;
+//   [[NexNetClient shared] configureWithBaseURL:@"https://api.example.com" ...]
+//
+// NexNetError bridges automatically to NSError with domain "com.nexnet.error"
+// and a meaningful error code — HTTP errors use their status code,
+// non-HTTP errors use negative codes in the -2000 range.
+// ─────────────────────────────────────────────────────────────────────────────
+
+// 8a — Configure via the ObjC-compatible client
+private func setupNexNetClient() {
+    NexNetClient.shared.configure(
+        baseURL: "https://jsonplaceholder.typicode.com",
+        defaultHeaders: ["Authorization": "Bearer my-secret-token"],
+        timeout: 30,
+        loggingEnabled: true
+    )
+}
+
+// 8b — GET via NexNetClient (identical call from ObjC: [[NexNetClient shared] get:...])
+private func fetchPostObjC(id: Int) {
+    NexNetClient.shared.get(
+        url: "/posts/\(id)",
+        headers: nil
+    ) { data, statusCode, error in
+        // data: raw JSON bytes — parse with JSONSerialization or JSONDecoder
+        // statusCode: HTTP status code (e.g. 200, 404)
+        // error: NSError with domain "com.nexnet.error", or nil on success
+        if let error {
+            print("Error \(error.code): \(error.localizedDescription)")
+            return
+        }
+        guard let data else { return }
+        if let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any] {
+            print("ObjC GET response: \(json["title"] ?? "no title")")
+        }
+    }
+}
+
+// 8c — POST via NexNetClient (pre-encode the body with JSONSerialization)
+private func createPostObjC(title: String, body: String) {
+    let payload: [String: Any] = ["title": title, "body": body, "userId": 1]
+    let bodyData = try? JSONSerialization.data(withJSONObject: payload)
+
+    NexNetClient.shared.post(
+        url: "/posts",
+        headers: ["X-Request-ID": UUID().uuidString],
+        body: bodyData
+    ) { data, statusCode, error in
+        if let error {
+            print("POST failed (\(error.code)): \(error.localizedDescription)")
+            return
+        }
+        print("POST succeeded — HTTP \(statusCode), \(data?.count ?? 0) bytes")
+    }
+}
+
+// 8d — DELETE via NexNetClient
+private func deletePostObjC(id: Int) {
+    NexNetClient.shared.delete(
+        url: "/posts/\(id)",
+        headers: nil
+    ) { _, statusCode, error in
+        if let error {
+            print("DELETE failed: \(error.localizedDescription)")
+        } else {
+            print("DELETE succeeded — HTTP \(statusCode)")
+        }
+    }
+}
+
+// 8e — Cancellation via NexNetClient (same NexNetCancellable token)
+private var objcRequest: NexNetCancellable?
+
+private func startAndCancelObjCRequest() {
+    objcRequest = NexNetClient.shared.get(url: "/posts", headers: nil) { _, _, _ in }
+    // Cancel immediately (e.g. if the initiating view was dismissed)
+    objcRequest?.cancel()
 }

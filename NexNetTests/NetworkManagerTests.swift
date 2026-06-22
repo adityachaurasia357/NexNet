@@ -35,7 +35,7 @@ struct NetworkManagerTests {
 
         MockURLProtocol.handler = { request in
             #expect(request.url?.absoluteString == absoluteURL)
-            return (.response(for: request.url!, statusCode: 200),
+            return (MockURLProtocol.response(for: request.url!, statusCode: 200),
                     jsonData(["id": 1, "title": "direct"]))
         }
 
@@ -51,7 +51,7 @@ struct NetworkManagerTests {
 
         MockURLProtocol.handler = { request in
             #expect(request.url?.absoluteString == "https://api.example.com/v1/posts/5")
-            return (.response(for: request.url!, statusCode: 200),
+            return (MockURLProtocol.response(for: request.url!, statusCode: 200),
                     jsonData(["id": 5, "title": "hello"]))
         }
 
@@ -67,7 +67,7 @@ struct NetworkManagerTests {
 
         MockURLProtocol.handler = { request in
             #expect(request.url?.absoluteString == "https://api.example.com/v1/posts/6")
-            return (.response(for: request.url!, statusCode: 200),
+            return (MockURLProtocol.response(for: request.url!, statusCode: 200),
                     jsonData(["id": 6, "title": "world"]))
         }
 
@@ -98,7 +98,7 @@ struct NetworkManagerTests {
         MockURLProtocol.handler = { request in
             #expect(request.httpMethod == "GET")
             #expect(request.httpBody == nil || request.httpBody?.isEmpty == true)
-            return (.response(for: request.url!, statusCode: 200),
+            return (MockURLProtocol.response(for: request.url!, statusCode: 200),
                     jsonData(["id": 1, "title": "ok"]))
         }
 
@@ -118,7 +118,7 @@ struct NetworkManagerTests {
             let body = try JSONSerialization.jsonObject(with: request.httpBody ?? Data()) as? [String: Any]
             #expect(body?["name"] as? String == "widget")
             #expect(body?["count"] as? Int == 42)
-            return (.response(for: request.url!, statusCode: 201),
+            return (MockURLProtocol.response(for: request.url!, statusCode: 201),
                     jsonData(["id": 2, "title": "new"]))
         }
 
@@ -140,7 +140,7 @@ struct NetworkManagerTests {
         MockURLProtocol.handler = { request in
             #expect(request.value(forHTTPHeaderField: "Accept") == "application/json")
             #expect(request.value(forHTTPHeaderField: "X-Client") == "NexNet")
-            return (.response(for: request.url!, statusCode: 200),
+            return (MockURLProtocol.response(for: request.url!, statusCode: 200),
                     jsonData(["id": 1, "title": "ok"]))
         }
 
@@ -157,7 +157,7 @@ struct NetworkManagerTests {
         MockURLProtocol.handler = { request in
             #expect(request.value(forHTTPHeaderField: "Accept") != nil)
             #expect(request.value(forHTTPHeaderField: "X-Request-ID") == "test-id-123")
-            return (.response(for: request.url!, statusCode: 200),
+            return (MockURLProtocol.response(for: request.url!, statusCode: 200),
                     jsonData(["id": 1, "title": "ok"]))
         }
 
@@ -176,7 +176,7 @@ struct NetworkManagerTests {
 
         MockURLProtocol.handler = { request in
             #expect(request.value(forHTTPHeaderField: "Accept") == "application/vnd.api+json")
-            return (.response(for: request.url!, statusCode: 200),
+            return (MockURLProtocol.response(for: request.url!, statusCode: 200),
                     jsonData(["id": 1, "title": "ok"]))
         }
 
@@ -192,7 +192,7 @@ struct NetworkManagerTests {
     func http404() async throws {
         let manager = makeMockManager(baseURL: "https://api.example.com")
         MockURLProtocol.handler = { request in
-            (.response(for: request.url!, statusCode: 404), Data())
+            (MockURLProtocol.response(for: request.url!, statusCode: 404), Data())
         }
 
         do {
@@ -209,7 +209,7 @@ struct NetworkManagerTests {
     @Test("401 response throws .unauthorized")
     func http401() async throws {
         let manager = makeMockManager(baseURL: "https://api.example.com")
-        MockURLProtocol.handler = { _ in (.response(statusCode: 401), Data()) }
+        MockURLProtocol.handler = { _ in (MockURLProtocol.response(statusCode: 401), Data()) }
 
         do {
             _ = try await manager.fetch(responseType: Post.self,
@@ -225,7 +225,7 @@ struct NetworkManagerTests {
     @Test("500 response throws .internalServerError")
     func http500() async throws {
         let manager = makeMockManager(baseURL: "https://api.example.com")
-        MockURLProtocol.handler = { _ in (.response(statusCode: 500), Data()) }
+        MockURLProtocol.handler = { _ in (MockURLProtocol.response(statusCode: 500), Data()) }
 
         do {
             _ = try await manager.fetch(responseType: Post.self,
@@ -243,7 +243,7 @@ struct NetworkManagerTests {
     @Test("204 response with EmptyResponse type succeeds without throwing")
     func emptyResponseType() async throws {
         let manager = makeMockManager(baseURL: "https://api.example.com")
-        MockURLProtocol.handler = { request in (.response(for: request.url!, statusCode: 204), Data()) }
+        MockURLProtocol.handler = { request in (MockURLProtocol.response(for: request.url!, statusCode: 204), Data()) }
 
         _ = try await manager.fetch(
             responseType: EmptyResponse.self, url: "/posts/1",
@@ -254,7 +254,7 @@ struct NetworkManagerTests {
     @Test("200 with empty body throws .emptyResponse when a non-empty type is expected")
     func emptyBodyForNonEmptyType() async throws {
         let manager = makeMockManager(baseURL: "https://api.example.com")
-        MockURLProtocol.handler = { request in (.response(for: request.url!, statusCode: 200), Data()) }
+        MockURLProtocol.handler = { request in (MockURLProtocol.response(for: request.url!, statusCode: 200), Data()) }
 
         do {
             _ = try await manager.fetch(responseType: Post.self,
@@ -274,7 +274,7 @@ struct NetworkManagerTests {
         let manager = makeMockManager(baseURL: "https://api.example.com")
         // 'id' should be Int but the server returns a String
         MockURLProtocol.handler = { request in
-            (.response(for: request.url!, statusCode: 200),
+            (MockURLProtocol.response(for: request.url!, statusCode: 200),
              Data(#"{"id":"not-a-number","title":"post"}"#.utf8))
         }
 
@@ -301,7 +301,7 @@ struct NetworkManagerTests {
 
         MockURLProtocol.handler = { request in
             #expect(request.url?.host == "reconfigured.api.com")
-            return (.response(for: request.url!, statusCode: 200),
+            return (MockURLProtocol.response(for: request.url!, statusCode: 200),
                     jsonData(["id": 1, "title": "ok"]))
         }
 
@@ -323,7 +323,7 @@ struct NetworkManagerTests {
         MockURLProtocol.handler = { request in
             // Config header should win
             #expect(request.value(forHTTPHeaderField: "Accept") == "application/vnd.api+json")
-            return (.response(for: request.url!, statusCode: 200),
+            return (MockURLProtocol.response(for: request.url!, statusCode: 200),
                     jsonData(["id": 1, "title": "ok"]))
         }
 
@@ -341,7 +341,7 @@ struct NetworkManagerTests {
         let expected = Data(#"{"raw":true}"#.utf8)
         let url      = URL(string: "https://api.example.com/raw")!
 
-        MockURLProtocol.handler = { _ in (.response(for: url, statusCode: 200), expected) }
+        MockURLProtocol.handler = { _ in (MockURLProtocol.response(for: url, statusCode: 200), expected) }
 
         let response = try await manager.requestRaw(NetworkRequest(url: url))
         #expect(response.data == expected)
@@ -357,7 +357,7 @@ struct NetworkManagerTests {
         let url     = URL(string: "https://api.example.com/posts/1")!
 
         MockURLProtocol.handler = { _ in
-            (.response(for: url, statusCode: 201,
+            (MockURLProtocol.response(for: url, statusCode: 201,
                        headers: ["X-Request-ID": "abc123"]),
              jsonData(["id": 1, "title": "meta"]))
         }
@@ -380,9 +380,9 @@ struct NetworkManagerTests {
         MockURLProtocol.handler = { _ in
             callCount += 1
             if callCount < 3 {
-                return (.response(for: url, statusCode: 500), Data())
+                return (MockURLProtocol.response(for: url, statusCode: 500), Data())
             }
-            return (.response(for: url, statusCode: 200), jsonData(["id": 9, "title": "ok"]))
+            return (MockURLProtocol.response(for: url, statusCode: 200), jsonData(["id": 9, "title": "ok"]))
         }
 
         let req = NetworkRequest(
@@ -403,7 +403,7 @@ struct NetworkManagerTests {
 
         MockURLProtocol.handler = { _ in
             callCount += 1
-            return (.response(for: url, statusCode: 503), Data())
+            return (MockURLProtocol.response(for: url, statusCode: 503), Data())
         }
 
         let req = NetworkRequest(
@@ -430,7 +430,7 @@ struct NetworkManagerTests {
 
         MockURLProtocol.handler = { _ in
             callCount += 1
-            return (.response(for: url, statusCode: 401), Data())
+            return (MockURLProtocol.response(for: url, statusCode: 401), Data())
         }
 
         let req = NetworkRequest(
@@ -449,7 +449,7 @@ struct NetworkManagerTests {
     func completionHandlerSuccess() async throws {
         let manager = makeMockManager(baseURL: "https://api.example.com")
         MockURLProtocol.handler = { request in
-            (.response(for: request.url!, statusCode: 200), jsonData(["id": 3, "title": "cb"]))
+            (MockURLProtocol.response(for: request.url!, statusCode: 200), jsonData(["id": 3, "title": "cb"]))
         }
 
         try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<Void, Error>) in
@@ -469,7 +469,7 @@ struct NetworkManagerTests {
     @Test("Completion handler variant delivers failure")
     func completionHandlerFailure() async throws {
         let manager = makeMockManager(baseURL: "https://api.example.com")
-        MockURLProtocol.handler = { _ in (.response(statusCode: 403), Data()) }
+        MockURLProtocol.handler = { _ in (MockURLProtocol.response(statusCode: 403), Data()) }
 
         try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<Void, Error>) in
             manager.fetch(responseType: Post.self, url: "/locked",
@@ -491,7 +491,7 @@ struct NetworkManagerTests {
     @Test("NexNetCancellable.cancel() can be called without crashing")
     func cancellableCancel() async {
         let manager = makeMockManager(baseURL: "https://api.example.com")
-        MockURLProtocol.handler = { _ in (.response(statusCode: 200), jsonData(["id": 1, "title": "x"])) }
+        MockURLProtocol.handler = { _ in (MockURLProtocol.response(statusCode: 200), jsonData(["id": 1, "title": "x"])) }
 
         let token = manager.fetch(responseType: Post.self, url: "/posts/1") { _ in }
         token.cancel()   // must not crash or deadlock
