@@ -13,7 +13,7 @@ A production-grade Swift networking framework built on async/await — type-safe
 - **Snake_case → camelCase** — built-in key strategy; no custom `CodingKeys` needed
 - **ISO 8601 dates** — handles both `2024-01-15T10:30:00Z` and `2024-01-15T10:30:00.123Z` out of the box
 - **Typed error handling** — 20 named `NexNetError` cases covering every HTTP status code and network condition
-- **Structured logging** — box-format call log with UUID, headers, body, status, response, cURL, and duration
+- **Structured logging** — emoji-annotated call log with status icon, size, headers, body, response, cURL, and duration; each call bookended by a `━` separator for instant scannability
 - **cURL export** — every request produces a fully copy-pasteable terminal command
 - **Runtime configuration** — swap `baseURL`, headers, and timeout at any time via `configure(with:)`
 - **Automatic retry** — configurable exponential back-off with per-request `RetryPolicy`
@@ -321,10 +321,10 @@ NexNet logs every completed network call — including retried calls — in a st
 
 | Build | Default | `print` | `os_log` |
 |-------|---------|---------|----------|
-| DEBUG | enabled | yes | yes |
+| DEBUG | enabled | yes | no |
 | RELEASE | disabled | no | yes (when enabled) |
 
-`print` output is compiled out in release builds via `#if DEBUG`. `os_log` runs in all builds as long as `isLoggingEnabled` is `true`, making production diagnostics available through Console.app and Instruments without any source changes.
+In DEBUG builds output goes to `print` only, so each call appears exactly once in Xcode's console. In release builds `print` is compiled out and output routes to `os_log` only, making production diagnostics available through Console.app and Instruments without any source changes.
 
 ### Toggle
 
@@ -338,31 +338,49 @@ NetworkManager.shared.isLoggingEnabled = true
 
 ### Log Format
 
-Every call produces one entry with these fields:
+Every call produces one entry bookended by `━` separators:
 
 ```
-┌─ [NexNet] Call ID: 4F3A2C1D-…
-├─ URL: https://api.example.com/users/1
-├─ Method: GET
-├─ Headers: {
-│      "Accept": "application/json",
-│      "Authorization": "Bearer abc123"
-│  }
-├─ Body: nil
-├─ Status: 200
-├─ Response: {
-│    "id" : 1,
-│    "email" : "alice@example.com",
-│    "first_name" : "Alice"
-│  }
-├─ cURL: curl -sS -X GET -H "Accept: application/json" -H "Authorization: Bearer abc123" 'https://api.example.com/users/1'
-└─ Duration: 124.3ms
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🌐 GET  https://api.example.com/users/1
+
+✅ Status      200 OK
+⏱️ Duration    124.3 ms
+🆔 Request ID  4F3A2C1D-…
+📦 Size        ↑ 0 B  ↓ 87 B
+
+📤 Headers
+{
+  "Accept": "application/json",
+  "Authorization": "Bearer abc123"
+}
+
+📤 Request Body
+nil
+
+📥 Response
+{
+  "email" : "alice@example.com",
+  "first_name" : "Alice",
+  "id" : 1
+}
+
+📋 cURL
+curl -X GET \
+'https://api.example.com/users/1' \
+-H 'Accept: application/json' \
+-H 'Authorization: Bearer abc123'
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 ```
+
+The status icon reflects the HTTP outcome — ✅ 2xx, 🔄 3xx, ⚠️ 4xx, ❌ 5xx or network error.
 
 On failure, the **Response** field shows the error description instead of JSON:
 
 ```
-├─ Response: Error — No resource was found at '/users/999' (404 Not Found).
+📥 Response
+Error — No resource was found at '/users/999' (404 Not Found).
 ```
 
 ---
@@ -371,19 +389,26 @@ On failure, the **Response** field shows the error description instead of JSON:
 
 Every network call includes a fully copy-pasteable `curl` command in its log output. The generated command:
 
-- Uses `-sS` for clean terminal output (silent progress, visible errors)
-- Includes all request headers with properly escaped values
+- Formatted across multiple lines with `\` continuations for readability
+- Includes all request headers with single-quote-escaped values
 - Includes the request body via `--data-raw` for POST/PUT/PATCH requests
 - Shell-escapes single quotes in both the URL and body using the `'\''` idiom, so the command runs correctly regardless of special characters
 
 **Example — GET with auth header:**
 ```sh
-curl -sS -X GET -H "Accept: application/json" -H "Authorization: Bearer eyJhbG..." 'https://api.example.com/users/1'
+curl -X GET \
+'https://api.example.com/users/1' \
+-H 'Accept: application/json' \
+-H 'Authorization: Bearer eyJhbG...'
 ```
 
 **Example — POST with JSON body:**
 ```sh
-curl -sS -X POST -H "Accept: application/json" -H "Content-Type: application/json" --data-raw '{"title":"Hello","body":"World","userId":1}' 'https://api.example.com/posts'
+curl -X POST \
+'https://api.example.com/posts' \
+-H 'Accept: application/json' \
+-H 'Content-Type: application/json' \
+--data-raw '{"title":"Hello","body":"World","userId":1}'
 ```
 
 This is useful for:
