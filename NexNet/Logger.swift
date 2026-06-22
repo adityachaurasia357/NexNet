@@ -76,10 +76,8 @@ public protocol NexNetLoggerProtocol: Sendable {
 
 /// Thread-safe structured logger backed by `os.log`.
 ///
-/// **Release behaviour:** `isEnabled` defaults to `false` in release builds — logging
-/// is compiled in but produces no output unless explicitly turned on. Console output
-/// (`print`) is additionally guarded by `#if DEBUG`, so it never reaches the console
-/// in release even when `isEnabled` is `true`; those builds route to `os_log` only.
+/// **Debug behaviour:** output goes to `print` only (Xcode console).
+/// **Release behaviour:** `isEnabled` defaults to `false`; when enabled, output routes to `os_log` only.
 public final class NexNetLogger: NexNetLoggerProtocol, @unchecked Sendable {
     public static let shared = NexNetLogger()
 
@@ -135,9 +133,10 @@ public final class NexNetLogger: NexNetLoggerProtocol, @unchecked Sendable {
         guard isEnabled, level >= minimumLevel else { return }
         let filename = (file as NSString).lastPathComponent
         let formatted = "\(level.symbol) [NexNet] \(filename):\(line) — \(message)"
-        os_log("%{public}@", log: osLog, type: level.osLogType, formatted)
         #if DEBUG
         print(formatted)
+        #else
+        os_log("%{public}@", log: osLog, type: level.osLogType, formatted)
         #endif
     }
 
@@ -187,9 +186,10 @@ public final class NexNetLogger: NexNetLoggerProtocol, @unchecked Sendable {
         └─ Duration: \(durationStr)
         """
 
-        os_log("%{public}@", log: osLog, type: .debug, entry)
         #if DEBUG
         print(entry)
+        #else
+        os_log("%{public}@", log: osLog, type: .debug, entry)
         #endif
     }
 }
