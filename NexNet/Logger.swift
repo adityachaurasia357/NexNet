@@ -157,11 +157,28 @@ public final class NexNetLogger: NexNetLoggerProtocol, @unchecked Sendable {
     ) {
         guard isEnabled else { return }
 
-        let method     = request.httpMethod ?? "GET"
-        let url        = request.url?.absoluteString ?? "unknown"
+        let method       = request.httpMethod ?? "GET"
+        let url          = request.url?.absoluteString ?? "unknown"
+        let durationStr  = String(format: "%.1f ms", duration * 1000)
+        let requestSize  = request.httpBody?.count ?? 0
+        let responseSize = responseData?.count ?? 0
+        let sizeStr      = "↑ \(formatSize(requestSize))  ↓ \(formatSize(responseSize))"
+
+        let statusLine: String
+        let icon: String
+        if let error {
+            statusLine = "Error — \(error.localizedDescription)"
+            icon       = "❌"
+        } else if let code = statusCode {
+            statusLine = "\(code) \(httpStatusText(code))"
+            icon       = statusIcon(for: code)
+        } else {
+            statusLine = "N/A"
+            icon       = "❌"
+        }
+
         let headersStr = formatHeaders(request.allHTTPHeaderFields ?? [:])
         let bodyStr    = request.httpBody.flatMap { prettyJSON(from: $0) } ?? "nil"
-        let statusStr  = statusCode.map { String($0) } ?? "N/A"
         let responseStr: String
         if let error {
             responseStr = "Error — \(error.localizedDescription)"
@@ -170,20 +187,32 @@ public final class NexNetLogger: NexNetLoggerProtocol, @unchecked Sendable {
         } else {
             responseStr = "nil"
         }
-        let curlStr      = curlCommand(for: request)
-        let durationStr  = String(format: "%.1fms", duration * 1000)
+        let curlStr = multilineCurlCommand(for: request)
+        let sep     = "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 
         let entry = """
 
-        ┌─ [NexNet] Call ID: \(id.uuidString)
-        ├─ URL: \(url)
-        ├─ Method: \(method)
-        ├─ Headers: \(indent(headersStr))
-        ├─ Body: \(indent(bodyStr))
-        ├─ Status: \(statusStr)
-        ├─ Response: \(indent(responseStr))
-        ├─ cURL: \(curlStr)
-        └─ Duration: \(durationStr)
+        \(sep)
+        🌐 \(method)  \(url)
+
+        \(icon) Status      \(statusLine)
+        ⏱️ Duration    \(durationStr)
+        🆔 Request ID  \(id.uuidString)
+        📦 Size        \(sizeStr)
+
+        📤 Headers
+        \(headersStr)
+
+        📤 Request Body
+        \(bodyStr)
+
+        📥 Response
+        \(responseStr)
+
+        📋 cURL
+        \(curlStr)
+
+        \(sep)
         """
 
         #if DEBUG
@@ -218,48 +247,78 @@ extension NexNetLogger {
 
 private extension NexNetLogger {
 
-    /// Pretty-prints JSON data; returns `nil` if `data` is not valid JSON.
     func prettyJSON(from data: Data) -> String? {
         guard
-            let obj   = try? JSONSerialization.jsonObject(with: data),
+            let obj    = try? JSONSerialization.jsonObject(with: data),
             let pretty = try? JSONSerialization.data(withJSONObject: obj, options: [.prettyPrinted, .sortedKeys]),
-            let str   = String(data: pretty, encoding: .utf8)
+            let str    = String(data: pretty, encoding: .utf8)
         else { return nil }
         return str
     }
 
-    /// Formats a headers dictionary as an indented multi-line block.
     func formatHeaders(_ headers: [String: String]) -> String {
-        guard !headers.isEmpty else { return "[:]" }
+        guard !headers.isEmpty else { return "nil" }
         let pairs = headers
             .sorted { $0.key < $1.key }
-            .map { "    \"\($0.key)\": \"\($0.value)\"" }
+            .map { "  \"\($0.key)\": \"\($0.value)\"" }
             .joined(separator: ",\n")
-        return "{\n\(pairs)\n  }"
+        return "{\n\(pairs)\n}"
     }
 
-    /// Indents every line after the first so multi-line values stay visually inside the box.
-    func indent(_ str: String) -> String {
-        let lines = str.components(separatedBy: "\n")
-        guard lines.count > 1 else { return str }
-        let tail = lines.dropFirst().map { "│    \($0)" }.joined(separator: "\n")
-        return "\(lines[0])\n\(tail)"
+    func statusIcon(for code: Int) -> String {
+        switch code {
+        case 200..<300: return "✅"
+        case 300..<400: return "🔄"
+        case 400..<500: return "⚠️"
+        default:        return "❌"
+        }
     }
 
-    /// Builds a fully copy-pasteable `curl` command from a `URLRequest`.
-    ///
-    /// - Header values with internal `"` are backslash-escaped.
-    /// - Body and URL single-quotes are shell-escaped using the `'\''` idiom.
-    func curlCommand(for request: URLRequest) -> String {
-        var parts: [String] = ["curl -sS"]
+    func httpStatusText(_ code: Int) -> String {
+        switch code {
+        case 200: return "OK"
+        case 201: return "Created"
+        case 204: return "No Content"
+        case 301: return "Moved Permanently"
+        case 302: return "Found"
+        case 304: return "Not Modified"
+        case 400: return "Bad Request"
+        case 401: return "Unauthorized"
+        case 403: return "Forbidden"
+        case 404: return "Not Found"
+        case 405: return "Method Not Allowed"
+        case 409: return "Conflict"
+        case 422: return "Unprocessable Entity"
+        case 429: return "Too Many Requests"
+        case 500: return "Internal Server Error"
+        case 502: return "Bad Gateway"
+        case 503: return "Service Unavailable"
+        case 504: return "Gateway Timeout"
+        default:  return ""
+        }
+    }
 
-        parts.append("-X \(request.httpMethod ?? "GET")")
+    func formatSize(_ bytes: Int) -> String {
+        if bytes < 1024 { return "\(bytes) B" }
+        let kb = Double(bytes) / 1024
+        if kb < 1024 { return String(format: "%.1f KB", kb) }
+        return String(format: "%.1f MB", kb / 1024)
+    }
+
+    /// Builds a multi-line copy-pasteable `curl` command from a `URLRequest`.
+    func multilineCurlCommand(for request: URLRequest) -> String {
+        var parts: [String] = ["curl -X \(request.httpMethod ?? "GET")"]
+
+        if let url = request.url {
+            let escaped = url.absoluteString.replacingOccurrences(of: "'", with: "'\\''")
+            parts.append("'\(escaped)'")
+        }
 
         request.allHTTPHeaderFields?
             .sorted { $0.key < $1.key }
             .forEach { key, value in
-                let escaped = value.replacingOccurrences(of: "\"", with: "\\\"")
-                parts.append("-H \"\(key): \(escaped)\"")
+                let escaped = value.replacingOccurrences(of: "'", with: "'\\''")
+                parts.append("-H '\(key): \(escaped)'")
             }
 
         if let body = request.httpBody,
@@ -269,11 +328,6 @@ private extension NexNetLogger {
             parts.append("--data-raw '\(escaped)'")
         }
 
-        if let url = request.url {
-            let escaped = url.absoluteString.replacingOccurrences(of: "'", with: "'\\''")
-            parts.append("'\(escaped)'")
-        }
-
-        return parts.joined(separator: " ")
+        return parts.joined(separator: " \\\n")
     }
 }
