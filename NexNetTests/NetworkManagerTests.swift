@@ -2,6 +2,8 @@
 //  NetworkManagerTests.swift
 //  NexNetTests
 //
+//  Created by Aditya Chaurasia on 22/06/2026.
+//
 //  Uses MockURLProtocol to intercept URLSession traffic.
 //  The suite is serialized because MockURLProtocol.handler is static shared state.
 //

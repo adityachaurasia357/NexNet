@@ -2,6 +2,8 @@
 //  ExampleUsage.swift
 //  NexNet
 //
+//  Created by Aditya Chaurasia on 22/06/2026.
+//
 //  Illustrates the most common NexNet usage patterns.
 //  All symbols are private so this file can live in the framework
 //  target without polluting the public API surface.

@@ -2,6 +2,8 @@
 //  RetryPolicyTests.swift
 //  NexNetTests
 //
+//  Created by Aditya Chaurasia on 22/06/2026.
+//
 //  Pure-logic tests for RetryPolicy — no networking required.
 //
 

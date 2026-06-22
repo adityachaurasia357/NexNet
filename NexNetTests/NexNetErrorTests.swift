@@ -2,6 +2,8 @@
 //  NexNetErrorTests.swift
 //  NexNetTests
 //
+//  Created by Aditya Chaurasia on 22/06/2026.
+//
 
 import Testing
 import Foundation

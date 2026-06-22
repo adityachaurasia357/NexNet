@@ -2,6 +2,8 @@
 //  NexNetObjC.swift
 //  NexNet
 //
+//  Created by Aditya Chaurasia on 22/06/2026.
+//
 //  Objective-C bridge layer:
 //    - NexNetError: CustomNSError   — proper NSError domain/code/userInfo bridging
 //    - NexNetClient                 — @objc wrapper class for ObjC and mixed-language targets

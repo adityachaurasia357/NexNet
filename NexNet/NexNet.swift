@@ -2,7 +2,7 @@
 //  NexNet.swift
 //  NexNet
 //
-//  Created by Aditya Chaurasia on 22/06/26.
+//  Created by Aditya Chaurasia on 22/06/2026.
 //
 //  Public entry point for the NexNet networking framework.
 //  After `import NexNet`, all public types are available directly.

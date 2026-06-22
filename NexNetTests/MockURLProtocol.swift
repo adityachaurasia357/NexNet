@@ -2,6 +2,8 @@
 //  MockURLProtocol.swift
 //  NexNetTests
 //
+//  Created by Aditya Chaurasia on 22/06/2026.
+//
 //  Shared test infrastructure. Register MockURLProtocol on an ephemeral
 //  URLSessionConfiguration to intercept all requests without hitting the network.
 //
